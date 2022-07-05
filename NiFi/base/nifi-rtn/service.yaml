@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nifi-rtn
+  namespace: dmp-rtn-dev
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 32710
+    # - name: prometheus
+    #   port: 9092
+    #   targetPort: 9092
+    #   nodePort: 32701
+  selector:
+    app: nifi-rtn-dev

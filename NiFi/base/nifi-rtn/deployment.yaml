@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nifi-rtn
+  namespace: dmp-rtn-dev
+spec:
+  selector:
+    matchLabels:
+      app: nifi-rtn-dev
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nifi-rtn-dev
+    spec:
+      # hostNetwork: true
+      # dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: nifi-rtn
+          image: apache/nifi:1.7.0
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              memory: "42Gi"
+              cpu: "3000m"
+            limits:
+              memory: "60Gi"
+              cpu: "4000m"
+          env:
+            - name: TZ
+              value: Europe/Kiev
+            - name: NIFI_HOME
+              value: /opt/nifi/nifi-current
+            - name: NIFI_LOG_DIR
+              value: /opt/nifi/nifi-current/logs
+            - name: NIFI_TOOLKIT_HOME
+              value: /opt/nifi/nifi-toolkit-current
+            - name: NIFI_PID_DIR
+              value: /opt/nifi/nifi-current/run
+            - name: NIFI_BASE_DIR
+              value: /opt/nifi
+            - name: NIFI_WEB_HTTP_PORT
+              value: "8080"              
+            - name: NIFI_VARIABLE_REGISTRY_PROPERTIES
+              value: /opt/nifi/nifi-current/conf/nifi.properties
+          volumeMounts:
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/logs
+              subPath: nifi-current/logs
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/conf
+              subPath: nifi-current/conf
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/database_repository
+              subPath: nifi-current/database_repository            
+            - name: nfs-mount
+              mountPath: /opt/nifi/scripts
+              subPath: scripts 
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/state
+              subPath: nifi-current/state
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/flowfile_repository
+              subPath: nifi-current/flowfile_repository
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/content_repository
+              subPath: nifi-current/content_repository
+            - name: nfs-mount
+              mountPath: /opt/nifi/nifi-current/provenance_repository
+              subPath: nifi-current/provenance_repository
+            - name: nfs-mount
+              mountPath: /usr/share/java
+              subPath: java    
+            - name: nfs-mount
+              mountPath: /usr/hdf/current
+              subPath: hdf            
+      initContainers:
+      - name: initial-nifi-rtn
+        image: dmp/nifi-init-rtn:0.3
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: nfs-mount
+          mountPath: /opt/nifi
+        - name: nfs-mount
+          mountPath: /usr/hdf/current
+          subPath: hdf
+        - name: nfs-mount
+          mountPath: /usr/share/java
+          subPath: java
+      volumes:
+        - name: nfs-mount
+          persistentVolumeClaim:
+            claimName: pvc-nfs-nifi-rtn

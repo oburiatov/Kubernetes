@@ -1,0 +1,16 @@
+stages:
+  - manual
+
+start manual:
+  stage: manual
+  image:
+    name: dmp/custom-envs/kubectl:1.21
+  when: manual
+  script:
+    - kubectl apply -f ./base/nifi-rtn/namespace.yaml
+    - kubectl apply -f ./base/nifi-rtn/storage.yaml
+    - sleep 10
+    - kubectl apply -f ./base/nifi-rtn/pvc-nfs.yaml
+    - sleep 10
+    - kubectl apply -f ./base/nifi-rtn/deployment.yaml
+    - kubectl apply -k ./base/nifi-rtn/service.yaml
